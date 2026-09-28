@@ -215,7 +215,7 @@ namespace TileQuest
             {
                 return; // base case: tile is hidden behind a tree canopy
             }
-            if (entityType == TileType.Rock && !CanPlaceRock(tiles, origin))
+            if (entityType == TileType.Rock && !CanPlaceRock(tiles, origin, width, height, blocked))
             {
                 return;
             }
@@ -233,10 +233,32 @@ namespace TileQuest
             }
         }
 
-        private static bool CanPlaceRock(Dictionary<Point, TileType> tiles, Point origin)
+        private static bool CanPlaceRock(
+            Dictionary<Point, TileType> tiles, Point origin, int width, int height, HashSet<Point>? blocked)
         {
             var candidate = DrawRock.GetBounds(origin, DrawTree.SourceTileSize);
             candidate.Inflate(3, 3);
+            if (candidate.X < 0 || candidate.Y < 0 ||
+                candidate.Right > width * DrawTree.SourceTileSize ||
+                candidate.Bottom > height * DrawTree.SourceTileSize)
+            {
+                return false;
+            }
+
+            if (blocked != null)
+            {
+                for (int x = candidate.X / DrawTree.SourceTileSize; x <= (candidate.Right - 1) / DrawTree.SourceTileSize; x++)
+                {
+                    for (int y = candidate.Y / DrawTree.SourceTileSize; y <= (candidate.Bottom - 1) / DrawTree.SourceTileSize; y++)
+                    {
+                        if (blocked.Contains(new Point(x, y)))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
             for (int x = origin.X - 2; x <= origin.X + 2; x++)
             {
                 for (int y = origin.Y - 2; y <= origin.Y + 2; y++)

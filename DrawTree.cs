@@ -26,7 +26,7 @@ namespace TileQuest
             new(205, 81, 22, 42),  // short, light
         };
 
-        private static readonly float[] SizeVariants = { 0.78f, 1f, 1.22f };
+        private static readonly float[] SizeVariants = { 0.8f, 1.2f, 1.6f };
 
         private readonly Texture2D _texture;
         private readonly Rectangle _source;

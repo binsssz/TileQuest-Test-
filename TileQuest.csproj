@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>TileQuest</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Cross-platform (Windows/macOS/Linux) OpenGL backend — no DirectX dependency. -->
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Direct-load sprites: no Content.mgcb / MonoGame.Content.Builder.Task
+         needed. These PNGs just get copied next to the .exe so Game1 can
+         open them at runtime with TitleContainer.OpenStream. -->
+    <None Update="Content\**\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -27,37 +26,12 @@ namespace TileQuest
         private Texture2D _rocksTexture = null!;
         private Texture2D _playerTexture = null!;
         private DrawTree[] _trees = Array.Empty<DrawTree>();
+        private DrawRock[] _rocks = Array.Empty<DrawRock>();
 
         private TileMap _map = null!;
         private Player _player = null!;
         private Camera2D _camera = null!;
         private readonly Random _random = new();
-
-        // Rocks.png is a 16x16 grid. Only the small rocks are used: the first
-        // two rows of the grey columns (4-7) and the brown columns (8-11).
-        // Each rock tile picks one of these by its position, so it stays the
-        // same rock every frame.
-        private const int RockCellSize = 16;
-        private static readonly Rectangle[] RockVariants = BuildRockVariants();
-
-        private static Rectangle[] BuildRockVariants()
-        {
-            var variants = new List<Rectangle>();
-            for (int row = 0; row < 2; row++)
-            {
-                for (int column = 4; column < 12; column++)
-                {
-                    variants.Add(new Rectangle(column * RockCellSize, row * RockCellSize, RockCellSize, RockCellSize));
-                }
-            }
-            return variants.ToArray();
-        }
-
-        private static Rectangle RockVariantFor(Point tile)
-        {
-            int hash = unchecked(tile.X * 19349663 ^ tile.Y * 73856093);
-            return RockVariants[(hash & 0x7fffffff) % RockVariants.Length];
-        }
 
         // player.png is a grid of 48x48 cells, 6 frames per row:
         //   rows 0-2 = standing (down, side, up), rows 3-5 = walking (down, side, up).
@@ -115,6 +89,7 @@ namespace TileQuest
             _grassTexture = LoadTexture("grass.png");
             _tallGrassOverlayTexture = LoadTexture("tallgrass_overlay.png");
             _rocksTexture = LoadTexture("Rocks.png");
+            _rocks = DrawRock.CreateFor(_map, _rocksTexture, TileSize);
             _playerTexture = LoadTexture("player.png");
         }
 
@@ -168,6 +143,7 @@ namespace TileQuest
             _spriteBatch.Begin(transformMatrix: _camera.GetTransformationMatrix(), samplerState: SamplerState.PointClamp);
 
             DrawTiles();
+            DrawRocks();
             DrawTreesAndPlayer();
 
             if (_encounterFlashSecondsRemaining > 0)
@@ -202,10 +178,15 @@ namespace TileQuest
                         // Drawn by DrawTree (one sprite per tree tile, in
                         // Draw), since tree sprites are taller than a tile.
                         break;
-                    case TileType.Rock:
-                        _spriteBatch.Draw(_rocksTexture, rect, RockVariantFor(gridPos), Color.White);
-                        break;
                 }
+            }
+        }
+
+        private void DrawRocks()
+        {
+            foreach (var rock in _rocks)
+            {
+                rock.Draw(_spriteBatch);
             }
         }
 

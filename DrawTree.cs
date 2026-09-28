@@ -26,6 +26,8 @@ namespace TileQuest
             new(205, 81, 22, 42),  // short, light
         };
 
+        private static readonly float[] SizeVariants = { 0.78f, 1f, 1.22f };
+
         private readonly Texture2D _texture;
         private readonly Rectangle _source;
         private readonly Point _anchorTile;
@@ -52,15 +54,35 @@ namespace TileQuest
             return Variants[(hash & 0x7fffffff) % Variants.Length];
         }
 
+        private static float ScaleFor(Point tile)
+        {
+            int hash = unchecked(tile.X * 83492791 ^ tile.Y * 29765797);
+            return SizeVariants[(hash & 0x7fffffff) % SizeVariants.Length];
+        }
+
         // Where the tree's sprite lands, in sheet pixels (16px per tile),
         // with the sprite centred on the tile and its bottom on the tile's
         // bottom edge. Used by ForestGenerator to keep trees from overlapping.
         public static Rectangle GetBounds(Point tile)
         {
             Rectangle source = VariantFor(tile);
-            int x = tile.X * SourceTileSize + SourceTileSize / 2 - source.Width / 2;
-            int y = (tile.Y + 1) * SourceTileSize - source.Height;
-            return new Rectangle(x, y, source.Width, source.Height);
+            float sizeScale = ScaleFor(tile);
+            int width = (int)Math.Round(source.Width * sizeScale);
+            int height = (int)Math.Round(source.Height * sizeScale);
+            int x = tile.X * SourceTileSize + SourceTileSize / 2 - width / 2;
+            int y = (tile.Y + 1) * SourceTileSize - height;
+            return new Rectangle(x, y, width, height);
+        }
+
+        public static Rectangle GetCollisionBounds(Point tile, int tileSize)
+        {
+            Rectangle source = VariantFor(tile);
+            float scale = ScaleFor(tile) * tileSize / (float)SourceTileSize;
+            int width = (int)Math.Round(source.Width * 0.4f * scale);
+            int height = (int)Math.Round(7f * scale);
+            int left = tile.X * tileSize + tileSize / 2 - width / 2;
+            int bottom = (tile.Y + 1) * tileSize;
+            return new Rectangle(left, bottom - height, width, height);
         }
 
         public static DrawTree[] CreateForest(TileMap map, Texture2D texture, int tileSize)
@@ -87,7 +109,7 @@ namespace TileQuest
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            float scale = _tileSize / (float)SourceTileSize;
+            float scale = _tileSize / (float)SourceTileSize * ScaleFor(_anchorTile);
             int width = (int)Math.Round(_source.Width * scale);
             int height = (int)Math.Round(_source.Height * scale);
             int anchorX = _anchorTile.X * _tileSize + _tileSize / 2;

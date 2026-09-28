@@ -42,8 +42,8 @@ namespace TileQuest
             // bigger map gets proportionally more clusters instead of feeling
             // emptier as it grows.
             int area = width * height;
-            if (treeClusters <= 0) treeClusters = Math.Max(6, area / 90);
-            if (rockClusters <= 0) rockClusters = Math.Max(4, area / 150);
+            if (treeClusters <= 0) treeClusters = Math.Max(6, area / 180);
+            if (rockClusters <= 0) rockClusters = Math.Max(4, area / 300);
             if (tallGrassPatches <= 0) tallGrassPatches = Math.Max(4, area / 120);
 
             // Trees are placed as separate sprites (never overlapping each
@@ -141,21 +141,24 @@ namespace TileQuest
             // base case: the sprite would overlap another tree, or hang off
             // the edge of the map.
             var bounds = DrawTree.GetBounds(origin);
-            if (bounds.X < 0 || bounds.Y < 0 ||
-                bounds.Right > width * DrawTree.SourceTileSize)
+            var spacedBounds = bounds;
+            spacedBounds.Inflate(3, 3);
+            if (spacedBounds.X < 0 || spacedBounds.Y < 0 ||
+                spacedBounds.Right > width * DrawTree.SourceTileSize ||
+                spacedBounds.Bottom > height * DrawTree.SourceTileSize)
             {
                 return;
             }
             foreach (var other in placedBounds)
             {
-                if (bounds.Intersects(other))
+                if (spacedBounds.Intersects(other))
                 {
                     return;
                 }
             }
 
             tiles[origin] = TileType.Tree;
-            placedBounds.Add(bounds);
+            placedBounds.Add(spacedBounds);
 
             for (int branch = 0; branch < 4; branch++)
             {
@@ -179,6 +182,7 @@ namespace TileQuest
                 }
 
                 var bounds = DrawTree.GetBounds(pair.Key);
+                bounds.Inflate(3, 3);
                 for (int tx = bounds.X / size; tx <= (bounds.Right - 1) / size; tx++)
                 {
                     for (int ty = bounds.Y / size; ty <= (bounds.Bottom - 1) / size; ty++)
@@ -211,6 +215,10 @@ namespace TileQuest
             {
                 return; // base case: tile is hidden behind a tree canopy
             }
+            if (entityType == TileType.Rock && !CanPlaceRock(tiles, origin))
+            {
+                return;
+            }
 
             tiles[origin] = entityType;
 
@@ -223,6 +231,27 @@ namespace TileQuest
                     SpreadCluster(tiles, origin + direction, entityType, random, width, height, depth + 1, maxDepth, spreadChance * 0.6, blocked);
                 }
             }
+        }
+
+        private static bool CanPlaceRock(Dictionary<Point, TileType> tiles, Point origin)
+        {
+            var candidate = DrawRock.GetBounds(origin, DrawTree.SourceTileSize);
+            candidate.Inflate(3, 3);
+            for (int x = origin.X - 2; x <= origin.X + 2; x++)
+            {
+                for (int y = origin.Y - 2; y <= origin.Y + 2; y++)
+                {
+                    var other = new Point(x, y);
+                    var otherBounds = DrawRock.GetBounds(other, DrawTree.SourceTileSize);
+                    otherBounds.Inflate(3, 3);
+                    if (tiles.TryGetValue(other, out var tile) && tile == TileType.Rock &&
+                        candidate.Intersects(otherBounds))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         private static Point? RandomGrassTile(

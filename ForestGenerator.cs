@@ -43,7 +43,7 @@ namespace TileQuest
             // emptier as it grows.
             int area = width * height;
             if (treeClusters <= 0) treeClusters = Math.Max(6, area / 180);
-            if (rockClusters <= 0) rockClusters = Math.Max(4, area / 300);
+            if (rockClusters <= 0) rockClusters = Math.Max(5, area / 200);
             if (tallGrassPatches <= 0) tallGrassPatches = Math.Max(4, area / 120);
 
             // Trees are placed as separate sprites (never overlapping each
